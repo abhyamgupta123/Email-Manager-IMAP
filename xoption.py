@@ -13,6 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
+        self.MainWindow = MainWindow
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1319, 948)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
@@ -54,6 +55,18 @@ class Ui_MainWindow(object):
         self.search_input.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.search_input.setObjectName("search_input")
         self.horizontalLayout.addWidget(self.search_input)
+        self.comboBox = QtWidgets.QComboBox(self.frame_2)
+        self.comboBox.setObjectName("comboBox")
+        self.comboBox.addItem("")
+        self.comboBox.setItemText(0, "")
+        self.comboBox.addItem("")
+        self.comboBox.addItem("")
+        self.comboBox.addItem("")
+        self.comboBox.addItem("")
+        self.comboBox.addItem("")
+        self.comboBox.addItem("")
+        self.comboBox.addItem("")
+        self.horizontalLayout.addWidget(self.comboBox)
         self.gobtn = QtWidgets.QCommandLinkButton(self.frame_2)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -99,6 +112,10 @@ class Ui_MainWindow(object):
         self.gridLayout_3.addWidget(self.addbtn, 1, 1, 1, 1)
         self.gridLayout_4.addWidget(self.widget, 1, 0, 2, 2)
         self.emails_listview = QtWidgets.QListWidget(self.frame_2)
+        font = QtGui.QFont()
+        font.setFamily("URW Bookman L")
+        font.setPointSize(13)
+        self.emails_listview.setFont(font)
         self.emails_listview.setObjectName("emails_listview")
         self.gridLayout_4.addWidget(self.emails_listview, 2, 2, 1, 1)
         self.emails_listview.raise_()
@@ -139,12 +156,15 @@ class Ui_MainWindow(object):
         self.actionCleanlooks.setObjectName("actionCleanlooks")
         self.actionWindowsvista = QtWidgets.QAction(MainWindow)
         self.actionWindowsvista.setObjectName("actionWindowsvista")
+        self.actionDelete_Mail = QtWidgets.QAction(MainWindow)
+        self.actionDelete_Mail.setObjectName("actionDelete_Mail")
         self.menuOptions.addAction(self.logout)
         self.menuOptions.addAction(self.another_account)
         self.menuOptions.addSeparator()
         self.menuOptions.addAction(self.actionExit)
         self.menuEdit.addAction(self.actionDelete)
         self.menuEdit.addSeparator()
+        self.menuEdit.addAction(self.actionDelete_Mail)
         self.menuView.addAction(self.actionMotif)
         self.menuView.addAction(self.actionWindows)
         self.menuView.addAction(self.actionCde)
@@ -158,11 +178,23 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
+    # custom
+    def change_window_name(self, name):
+        _translate = QtCore.QCoreApplication.translate
+        self.MainWindow.setWindowTitle(_translate("MainWindow", name))
+
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Email Client"))
         self.folder_label.setText(_translate("MainWindow", "Folders "))
         self.search_label.setText(_translate("MainWindow", "Search  :"))
+        self.comboBox.setItemText(1, _translate("MainWindow", "Seen"))
+        self.comboBox.setItemText(2, _translate("MainWindow", "Unseen"))
+        self.comboBox.setItemText(3, _translate("MainWindow", "Mail From"))
+        self.comboBox.setItemText(4, _translate("MainWindow", "Deleted"))
+        self.comboBox.setItemText(5, _translate("MainWindow", "Since"))
+        self.comboBox.setItemText(6, _translate("MainWindow", "Text"))
+        self.comboBox.setItemText(7, _translate("MainWindow", "Subject"))
         self.gobtn.setText(_translate("MainWindow", "Go"))
         self.addbtn.setText(_translate("MainWindow", "+"))
         self.menuOptions.setTitle(_translate("MainWindow", "Options"))
@@ -176,12 +208,14 @@ class Ui_MainWindow(object):
         self.actionExit.setShortcut(_translate("MainWindow", "Ctrl+W"))
         self.actionDelete.setText(_translate("MainWindow", "Delete selected"))
         self.actionDelete.setShortcut(_translate("MainWindow", "Del"))
-        self.actionMotif.setText(_translate("MainWindow", "Fusion"))
+        self.actionMotif.setText(_translate("MainWindow", "motif"))
         self.actionWindows.setText(_translate("MainWindow", "Windows"))
         self.actionCde.setText(_translate("MainWindow", "Cde"))
         self.actionPlastique.setText(_translate("MainWindow", "Plastique"))
         self.actionCleanlooks.setText(_translate("MainWindow", "Cleanlooks"))
         self.actionWindowsvista.setText(_translate("MainWindow", "windowsvista"))
+        self.actionDelete_Mail.setText(_translate("MainWindow", "Delete Mail"))
+        self.actionDelete_Mail.setShortcut(_translate("MainWindow", "Shift+Del"))
 
 
 # if __name__ == "__main__":

@@ -53,12 +53,6 @@ class Ui_MainWindow(object):
         self.retranslateUi(self.MainWindow)
         QtCore.QMetaObject.connectSlotsByName(self.MainWindow)
 
-    def _show(self):
-        self.MainWindow.show()
-
-    def _quit(self):
-        # QtCore.QCoreApplication.instance().quit()
-        self.MainWindow.close()
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -73,6 +67,18 @@ class Ui_MainWindow(object):
         self.action_browser.setShortcut(_translate("MainWindow", "Ctrl+B"))
         self.action_folder.setShortcut(_translate("MainWindow", "Ctrl+F"))
 
+
+    # customs
+    def _show(self):
+        self.MainWindow.show()
+
+    def _quit(self):
+        # QtCore.QCoreApplication.instance().quit()
+        self.MainWindow.close()
+
+    def _change_window_name(self, name):
+        _translate = QtCore.QCoreApplication.translate
+        self.MainWindow.setWindowTitle(_translate("MainWindow", name))
 
 # if __name__ == "__main__":
 #     import sys
