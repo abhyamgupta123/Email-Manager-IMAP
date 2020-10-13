@@ -15,6 +15,7 @@ import os
 import webbrowser
 from imapclient import IMAPClient
 import pickle
+import datetime
 
 
 
@@ -22,6 +23,7 @@ class UI_login(login.Ui_email, QtWidgets.QMainWindow, QtWidgets.QDialog):
     def __init__(self, imap_class):
         super().__init__()
         self.imap = imap_class
+
 
 
     def buttons(self):
@@ -32,29 +34,46 @@ class UI_login(login.Ui_email, QtWidgets.QMainWindow, QtWidgets.QDialog):
         self.signin_btn.clicked.connect(lambda: self.login())
 
     def login(self):
+        server_name = self.server_name.text()
         email = self.Email_edit.text()
         passwd = self.Pass_edit.text()
-        print(passwd)
-        print(email)
-        self.imap.login(email, passwd)
-        self.Email_edit.setText("")
-        self.Pass_edit.setText("")
 
-        db ={}
-        db["email"] = email
-        db["pswd"]  = passwd
+        if (server_name != "" and email != "" and passwd != ""):
+            response = self.imap.login(email, passwd, server_name)
+            self.Email_edit.setText("")
+            self.Pass_edit.setText("")
 
-        credential_file = open('.credentials', 'wb')
-        pickle.dump(db, credential_file)
-        credential_file.close()
-        # self.signin_widget.setVisible(False)
-        self.quit_this_window()
+            if response:
+                db ={}
+                db["email"]  = email
+                db["pswd"]   = passwd
+                db["server"] = server_name
+
+                credential_file = open('.credentials', 'wb')
+                pickle.dump(db, credential_file)
+                credential_file.close()
+                # self.signin_widget.setVisible(False)
+                self.quit_this_window()
+
+            else:
+                self.warning_label.setText("Signin Failed, Try again")
+
+        else:
+            if server_name == "":
+                self.warning_label.setText("Server field is Mandatory")
+
+            elif email == "":
+                self.warning_label.setText("Email field is Mandatory")
+
+            else:
+                self.warning_label.setText("Enter your password to continue")
+
 
     def quit_this_window(self):
         QtCore.QCoreApplication.instance().quit()
 
     def logout(self):
-        self.imap.logout()
+        # self.imap.logout()
         sys.exit()
 
     def check_logined(self):
@@ -63,9 +82,10 @@ class UI_login(login.Ui_email, QtWidgets.QMainWindow, QtWidgets.QDialog):
             db = pickle.load(dbfile)
             temp_email = db["email"]
             temp_pswd  = db["pswd"]
-            if ( temp_email != "" and temp_pswd != ""):
+            temp_srvvr = db["server"]
+            if ( temp_email != "" and temp_pswd != "" and temp_srvvr != ""):
                 print("user exsits logging in..!!\n")
-                self.imap.login(temp_email, temp_pswd)
+                self.imap.login(temp_email, temp_pswd, temp_srvvr)
                 dbfile.close()
                 return 1
                 # QtCore.QCoreApplication.instance().quit()
@@ -85,7 +105,9 @@ class UI_main(xoption.Ui_MainWindow, QtWidgets.QMainWindow, QtWidgets.QDialog):
         super(UI_main, self).__init__()
         self.imap = imap_class
 
+
     def initialiser(self):
+        self.change_window_name(self.imap.email)
         # initialising folders list
         self.folders = self.imap.list_folders()
         self.folder_listview.clear()
@@ -101,6 +123,7 @@ class UI_main(xoption.Ui_MainWindow, QtWidgets.QMainWindow, QtWidgets.QDialog):
         self.logout.triggered.connect(self.logout_thisWindow)
         self.another_account.triggered.connect(self.logout_session)
         self.actionDelete.triggered.connect(self.delete_folder)
+        self.actionDelete_Mail.triggered.connect(self.delete_email)
 
         # setting listeners for style view
         self.actionMotif.triggered.connect(lambda: self.style_choice("Fusion"))
@@ -110,8 +133,10 @@ class UI_main(xoption.Ui_MainWindow, QtWidgets.QMainWindow, QtWidgets.QDialog):
         self.actionCde.triggered.connect(lambda: self.style_choice("cde"))
         self.actionWindows.triggered.connect(lambda: self.style_choice("Windows"))
 
+        # listener for comboBox
+        self.comboBox.activated[str].connect(self.search_choice)
         # listener for go button
-        # self.gobtn.clicked.connect()
+        self.gobtn.clicked.connect(self.start_search)
 
         # listener for add button
         self.addbtn.clicked.connect(lambda: self.add_folder())
@@ -119,14 +144,65 @@ class UI_main(xoption.Ui_MainWindow, QtWidgets.QMainWindow, QtWidgets.QDialog):
     def style_choice(self, text):
         QtWidgets.QApplication.setStyle(QtWidgets.QStyleFactory.create(text))
 
+    def search_choice(self, text):
+        self.search_choice_type = text
+
+    def start_search(self):
+        choice_selected = self.search_choice_type
+        parameter = self.search_input.text()
+
+        if (choice_selected == "Seen"):
+            messages = self.imap.search_mails("SEEN", "")
+            print("Your choice is => ", choice_selected)
+
+        elif (choice_selected == "Unseen"):
+            messages = self.imap.search_mails("UNSEEN", "")
+            print("Your choice is => ", choice_selected)
+
+        elif (choice_selected == "Mail From"):
+            messages = self.imap.search_mails("FROM", parameter)
+            print("Your choice is => ", choice_selected)
+
+        elif (choice_selected == "Deleted"):
+            messages = self.imap.search_mails("DELETED", "")
+            print("Your choice is => ", choice_selected)
+
+        elif (choice_selected == "Since"):
+            datelist = parameter.split("/")
+            mail_date = datetime.date(int(datelist[0]), int(datelist[1]), int(datelist[2]))
+            messages = self.imap.search_mails("SINCE", mail_date)
+            print("Your choice is => ", choice_selected)
+
+        elif (choice_selected == "Text"):
+            messages = self.imap.search_mails("TEXT", parameter)
+            print("Your choice is => ", choice_selected)
+
+        elif (choice_selected == "Subject"):
+            messages = self.imap.search_mails("SUBJECT", parameter)
+            print("Your choice is => ", choice_selected)
+
+        self.emails_listview.clear()
+        self.folder_label.setText(choice_selected)
+        if messages != None:
+            for msgid, data in messages:
+                envelope = data[b'ENVELOPE']
+                email_item = 'ID #%d: "%s" received %s' % (msgid, envelope.subject.decode(), envelope.date)
+                self.emails_listview.insertItem(0, email_item)
+                print('ID #%d: "%s" received %s' % (msgid, envelope.subject.decode(), envelope.date))
+        else:
+            print("No Mails")
+
+        self.emails_listview.itemClicked.connect(self.mail_window)
+
 
     def logout_thisWindow(self):
         os.execv(sys.executable, ['python'] + sys.argv)
 
     def logout_session(self):
         db ={}
-        db["email"] = ""
-        db["pswd"]  = ""
+        db["email"]  = ""
+        db["pswd"]   = ""
+        db["server"] = ""
 
         credential_file = open('.credentials', 'wb')
         pickle.dump(db, credential_file)
@@ -157,27 +233,39 @@ class UI_main(xoption.Ui_MainWindow, QtWidgets.QMainWindow, QtWidgets.QDialog):
         self.initialiser()
 
     def delete_folder(self):
+        self.emails_listview.clear()
         self.imap.deleteFolder(self.current_folder.text())
         self.initialiser()
         self.folder_label.setText("Folders")
+        self.search_input.setText("")
 
-    def mail_window(self,mail_item):
+    def delete_email(self):
+        self.emails_listview.clear()
+        self.imap.deleteEmail(self.mail_id_number)
+        print('done, Mail deleted successfully..!!')
+        self.folder_clicked(self.current_folder)
+        self.search_input.setText("")
+
+
+    def mail_window(self, mail_item):
         print("mail clicked  => ", mail_item.text())
-        t1 = mail_item.text().split("#")[1].split(":")[0]
-        print(t1)
+        id = mail_item.text().split("#")[1].split(":")[0]
+        self.mail_id_number = id
+        print(id)
 
         # getting those values
-        fpath, data_body, to, mail_from, mail_date = self.imap.fetch_email_content(t1)
+        fpath, data_body, to, mail_from, mail_date, mail_subject = self.imap.fetch_email_content(id)
 
-        self.Email_window(fpath, data_body, to, mail_from, mail_date)
+        self.Email_window(fpath, data_body, to, mail_from, mail_date, mail_subject)
 
 
 # This is portion of Controlling Email mainwindow: ==> ***Start***
-    def Email_window(self,fpath, body, _to, _from, _date):
+    def Email_window(self, fpath, body, _to, _from, _date, _subject):
         file = open(fpath, 'rb')
         self._mail = email_gui.Ui_MainWindow()
         self._mail.setupUi(QtWidgets.QMainWindow())
         self._mail._show()
+        self._mail._change_window_name(_subject)
 
         self.Email_window_configuration(fpath, body, _to, _from, _date)
 
@@ -210,13 +298,41 @@ class UI_main(xoption.Ui_MainWindow, QtWidgets.QMainWindow, QtWidgets.QDialog):
 
 class imap:
     def __init__(self):
-        self.server = IMAPClient('imap.gmail.com', use_uid=True)
+        try:
+            dbfile = open('.credentials', 'rb')
+            db = pickle.load(dbfile)
+            temp_server = db["server"]
+            if (temp_server == ""):
+                self.server_fail_flag = 1                                               # declaring that server object of imap is not initialised
+                pass
 
-    def login(self, id, passwd):
+            else:
+                try:
+                    self.server = IMAPClient(temp_server, use_uid=True)
+                    self.server_fail_flag = 0
+                except:
+                    self.server_fail_flag = 1                                           # declaring that server object of imap is not initialised
+                    print("Couldn't able to sign in. Please try again with valied credentials")
+
+        except:
+            self.server_fail_flag = 1                                                   # declaring that server object of imap is not initialised
+            file = open(".credentials","w+")
+            file.close()
+
+
+    def login(self, id, passwd, server):
+        self.server_name = server
         self.email  = id
         self.passwd = passwd
-        self.server.login(self.email, self.passwd)
-        print("Login successful")
+        try:
+            if (self.server_fail_flag == 1):
+                self.server = IMAPClient(self.server_name, use_uid=True)
+            self.server.login(self.email, self.passwd)
+            return 1
+            print("Login successful")
+        except :
+            return 0
+
 
     def logout(self):
         print("Logged out")
@@ -240,6 +356,9 @@ class imap:
     def deleteFolder(self, folderName):
         self.server.delete_folder(folderName)
 
+    def deleteEmail(self, messages):
+        self.server.delete_messages(messages)
+
     def list_mails(self, folder_name):
         select_info = self.server.select_folder(folder_name)
         print('%d messages in %s' % (select_info[b'EXISTS'], folder_name))
@@ -252,6 +371,26 @@ class imap:
         fetched_msgs = self.server.fetch(messages, ['ENVELOPE']).items()
 
         return fetched_msgs
+
+    def search_mails(self, catagory, parameter):
+        if (catagory in ["FROM", "TEXT", "SINCE", "SUBJECT"]):
+            print([catagory, parameter])
+            messages = self.server.search([catagory, parameter])
+            print("%s messages from Search catagory -> %s" % (len(messages), catagory))
+
+            fetched_msgs = self.server.fetch(messages, ['ENVELOPE']).items()
+            print("fetched Messages are ", fetched_msgs)
+            return fetched_msgs
+
+        else:
+            print([catagory])
+            messages = self.server.search([catagory])
+            print(messages)
+            print("%s messages from Search catagory -> %s" % (len(messages), catagory))
+
+            fetched_msgs = self.server.fetch(messages, ['ENVELOPE']).items()
+            print("fetched Messages are ", fetched_msgs)
+            return fetched_msgs
 
     def fetch_email_content(self, msg_id):
         for msgid, data in self.server.fetch(msg_id, 'RFC822').items():
@@ -309,13 +448,14 @@ class imap:
             to        = msg.get("To")
             mail_from = msg.get("From")
             mail_date = msg.get("Date")
+            mail_subject = msg.get("Subject")
             print("To   =>", to)
             print("From =>", mail_from)
             print("Date =>", mail_date)
             print("="*100)
 
             # returning the useful values
-            return (filepath, body, to, mail_from, mail_date)
+            return (filepath, body, to, mail_from, mail_date, mail_subject)
 
 
 if __name__ == "__main__":
