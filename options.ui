@@ -84,6 +84,40 @@
           </widget>
          </item>
          <item>
+          <widget class="QComboBox" name="comboBox">
+           <item>
+            <property name="text">
+             <string/>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Seen</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Unseen</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>From</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Deleted</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>SINCE</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
           <widget class="QCommandLinkButton" name="gobtn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
@@ -174,7 +208,17 @@
         </widget>
        </item>
        <item row="2" column="2">
-        <widget class="QListWidget" name="emails_listview"/>
+        <widget class="QListWidget" name="emails_listview">
+         <property name="font">
+          <font>
+           <family>URW Bookman L</family>
+           <pointsize>13</pointsize>
+          </font>
+         </property>
+         <property name="spacing">
+          <number>4</number>
+         </property>
+        </widget>
        </item>
       </layout>
       <zorder>emails_listview</zorder>
@@ -208,6 +252,7 @@
     </property>
     <addaction name="actionDelete"/>
     <addaction name="separator"/>
+    <addaction name="actionDelete_Mail"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -285,6 +330,14 @@
   <action name="actionWindowsvista">
    <property name="text">
     <string>windowsvista</string>
+   </property>
+  </action>
+  <action name="actionDelete_Mail">
+   <property name="text">
+    <string>Delete Mail</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+Del</string>
    </property>
   </action>
  </widget>
